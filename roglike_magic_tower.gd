@@ -20,13 +20,6 @@ const MONSTER_ANIM_INTERVAL := 0.45
 var _monster_anim_phase := 0 # 0 or 1
 var _monster_anim_timer := 0.0
 
-# per-type two-frame colors for fallback drawing (replace with sprite frames when available)
-const MONSTER_FRAME_COLORS = [
-	[Color(1.0, 0.45, 0.45), Color(1.0, 0.6, 0.6)],
-	[Color(0.9, 0.75, 0.35), Color(1.0, 0.85, 0.45)],
-	[Color(0.7, 0.5, 1.0), Color(0.85, 0.7, 1.0)]
-]
-
 enum CellKind {FLOOR, WALL, MONSTER, ITEM, STAIRS}
 
 var map = [] # 2D array [x][y] -> dictionary describing the cell
@@ -41,14 +34,6 @@ var player = {
 var rng := RandomNumberGenerator.new()
 
 @onready var _tilemap : TileMapLayer = $TileMapLayer
-var _tileset : TileSet = null
-var _tile_ids = {}
-
-func _add_tile_to_tileset(ts: TileSet, id: int, tile_name: String, tex: Texture) -> void:
-	var pattern: TileMapPattern = TileMapPattern.new()
-	pattern.set_size(Vector2i(CELL, CELL))
-	ts.add_pattern(pattern, id)
-	_tile_ids[tile_name] = id
 
 func _ready():
 	rng.randomize()
@@ -315,53 +300,3 @@ func _pickup_item(ix: int, iy: int) -> void:
 	# move player into the cell
 	player["pos"] = Vector2(ix, iy)
 	call_deferred("_render_tilemap")
-
-func _draw():
-	# fallback drawing only when TileMap is not available (so we can run
-	# without assets or TileMap). If a runtime TileMap was created we skip
-	# this draw to avoid double-rendering.
-	if _tilemap != null:
-		return
-
-	draw_rect(Rect2(0, 0, MAP_SIZE * CELL, MAP_SIZE * CELL), Color(0, 0, 0))
-	# draw the entire map using simple colored rectangles.
-	for x in range(MAP_SIZE):
-		for y in range(MAP_SIZE):
-			var cell = map[x][y]
-			var color = Color(0.2, 0.2, 0.2) # default wall-like
-			match cell["kind"]:
-				CellKind.WALL:
-					color = Color(0.2, 0.2, 0.2)
-				CellKind.FLOOR:
-					color = Color(0.95, 0.95, 0.9)
-				CellKind.MONSTER:
-					# monster color depends on its type and current animation phase
-					var mtype = 0
-					if cell["variant"] and cell["variant"].has("type"):
-						mtype = int(cell["variant"]["type"])
-					mtype = clamp(mtype, 0, MONSTER_TYPES - 1)
-					color = MONSTER_FRAME_COLORS[mtype][_monster_anim_phase]
-				CellKind.ITEM:
-					color = Color(0.5, 1.0, 0.6)
-				CellKind.STAIRS:
-					color = Color(0.5, 0.75, 1.0)
-
-			# if stairs are hidden at a monster/item cell, draw that underlying type
-			if cell["has_stairs"] and cell["stairs_hidden"]:
-				if cell["kind"] == CellKind.MONSTER:
-					color = Color(1.0, 0.45, 0.45)
-				elif cell["kind"] == CellKind.ITEM:
-					color = Color(0.5, 1.0, 0.6)
-
-			var rect = Rect2(x * CELL, y * CELL, CELL, CELL)
-			draw_rect(rect, color)
-			# border
-			draw_rect(rect, Color(0, 0, 0), false, 1)
-
-	# draw player as a yellow square
-	var p = player["pos"]
-	var prect = Rect2(p.x * CELL + 1, p.y * CELL + 1, CELL - 2, CELL - 2)
-	draw_rect(prect, Color(1.0, 1.0, 0.1))
-
-	# Add textual info via print() so it's visible in the debugger console
-	print("HP:%d  ATK:%d  DEF:%d  Pos:(%d,%d)" % [player["hp"], player["atk"], player["def"], int(p.x), int(p.y)])
