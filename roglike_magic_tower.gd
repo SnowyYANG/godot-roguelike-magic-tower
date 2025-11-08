@@ -10,7 +10,7 @@ extends Node2D
 #   without any imported sprites). To use textures, set the texture paths below.
 
 const CELL := 12
-const INNER := 9
+const INNER := 8
 const OUTER := INNER + 2 # 11
 const MAP_SIZE := OUTER
 
@@ -40,36 +40,15 @@ var player = {
 
 var rng := RandomNumberGenerator.new()
 
-var _tilemap : TileMapLayer = null
+@onready var _tilemap : TileMapLayer = $TileMapLayer
 var _tileset : TileSet = null
 var _tile_ids = {}
-
-func _create_tex_from_color(c: Color) -> Texture:
-	var img = Image.create(CELL, CELL, false, Image.FORMAT_RGBA8)
-	for px in range(CELL):
-		for py in range(CELL):
-			img.set_pixel(px, py, c)
-	var it = ImageTexture.create_from_image(img)
-	return it
 
 func _add_tile_to_tileset(ts: TileSet, id: int, tile_name: String, tex: Texture) -> void:
 	var pattern: TileMapPattern = TileMapPattern.new()
 	pattern.set_size(Vector2i(CELL, CELL))
 	ts.add_pattern(pattern, id)
 	_tile_ids[tile_name] = id
-
-# Optional texture paths (adjust when you import assets). If textures are missing the
-# script falls back to drawing colored rects.
-const ASSET_PATHS = {
-	"floor": "res://sprites/floor.png",
-	"wall": "res://sprites/wall.png",
-	"monster": "res://sprites/monster.png",
-	"item_atk": "res://sprites/item_atk.png",
-	"item_def": "res://sprites/item_def.png",
-	"item_hp": "res://sprites/item_hp.png",
-	"stairs": "res://sprites/stairs.png",
-	"player": "res://sprites/player.png"
-}
 
 func _ready():
 	rng.randomize()
@@ -90,96 +69,49 @@ func _process(delta: float) -> void:
 		_monster_anim_phase = 1 - _monster_anim_phase
 		call_deferred("_render_tilemap")
 
-
-func _ensure_tilemap() -> void:
-	# create TileMap and TileSet at runtime. This allows immediate TileMap rendering
-	# without requiring pre-created TileSet resources. Textures are generated from
-	# Image objects sized CELL x CELL so they match your pixel grid.
-	if _tilemap != null:
-		return
-
-	_tilemap = TileMapLayer.new()
-	add_child(_tilemap)
-
-	_tileset = TileSet.new()
-	_tileset.tile_size = Vector2i(CELL, CELL)
-	var next_id = 0
-
-	# floor and wall
-	_add_tile_to_tileset(_tileset, next_id, "floor", _create_tex_from_color(Color(0.95, 0.95, 0.9)))
-	next_id += 1
-	_add_tile_to_tileset(_tileset, next_id, "wall", _create_tex_from_color(Color(0.2, 0.2, 0.2)))
-	next_id += 1
-	_add_tile_to_tileset(_tileset, next_id, "stairs", _create_tex_from_color(Color(0.5, 0.75, 1.0)))
-	next_id += 1
-
-	# items
-	_add_tile_to_tileset(_tileset, next_id, "item_atk", _create_tex_from_color(Color(0.6, 0.9, 0.6)))
-	next_id += 1
-	_add_tile_to_tileset(_tileset, next_id, "item_def", _create_tex_from_color(Color(0.5, 0.85, 0.5)))
-	next_id += 1
-	_add_tile_to_tileset(_tileset, next_id, "item_hp", _create_tex_from_color(Color(0.4, 1.0, 0.6)))
-	next_id += 1
-
-	# monsters: type/frame combinations
-	for t in range(MONSTER_TYPES):
-		for f in range(2):
-			var col = MONSTER_FRAME_COLORS[t][f]
-			_add_tile_to_tileset(_tileset, next_id, "monster_%d_%d" % [t, f], _create_tex_from_color(col))
-			next_id += 1
-
-	# player
-	_add_tile_to_tileset(_tileset, next_id, "player", _create_tex_from_color(Color(1.0, 1.0, 0.1)))
-	next_id += 1
-
-	_tilemap.tile_set = _tileset
-
-
 func _render_tilemap() -> void:
 	if _tilemap == null:
 		return
 	# Clear all existing cells
 	for x in range(MAP_SIZE):
 		for y in range(MAP_SIZE):
-			_tilemap.set_cell(Vector2i(x, y))
+			_tilemap.set_cell(Vector2i(x, y),0,Vector2i(22,0))
 
 	# Fill according to map
 	for x in range(MAP_SIZE):
 		for y in range(MAP_SIZE):
 			var cell = map[x][y]
-			var tid = -1
+			var coords:Vector2i
+			var alter = 0
 			match cell["kind"]:
 				CellKind.WALL:
-					tid = _tile_ids.get("wall", -1)
+					coords = Vector2i(8,3)
 				CellKind.FLOOR:
-					tid = _tile_ids.get("floor", -1)
+					coords = Vector2i(22,0)
 				CellKind.MONSTER:
 					var mtype = 0
 					if cell["variant"] and cell["variant"].has("type"):
 						mtype = int(cell["variant"]["type"])
 					mtype = clamp(mtype, 0, MONSTER_TYPES - 1)
-					var frame = _monster_anim_phase
-					tid = _tile_ids.get("monster_%d_%d" % [mtype, frame], -1)
+					alter = 0# _monster_anim_phase
+					coords = Vector2i(105,42)
 				CellKind.ITEM:
 					# choose tile by item type if variant exists
 					var itype = cell["variant"].type
 					if itype == "atk":
-						tid = _tile_ids.get("item_atk", -1)
+						coords = Vector2i(40,6)
 					elif itype == "def":
-						tid = _tile_ids.get("item_def", -1)
+						coords = Vector2i(40,12)
 					else:
-						tid = _tile_ids.get("item_hp", -1)
+						coords = Vector2i(30,4)
 				CellKind.STAIRS:
-					tid = _tile_ids.get("stairs", -1)
-
-			if tid >= 0:
-				_tilemap.set_cell(Vector2i(x, y), tid)
+					coords = Vector2i(24,0)
+			
+			_tilemap.set_cell(Vector2i(x, y), 0, coords, alter)
 
 	# draw player on top by setting its tile
 	var p = player["pos"]
-	var ptid = _tile_ids.get("player", -1)
-	if ptid >= 0:
-		_tilemap.set_cell(Vector2i(int(p.x), int(p.y)), ptid)
+	_tilemap.set_cell(Vector2i(int(p.x), int(p.y)), 0, Vector2(153,1))
 
 func _init_map():
 	# initialize blank map
@@ -235,18 +167,22 @@ func _init_map():
 	# Place stairs: choose any non-wall cell. If the chosen cell currently has a
 	# monster or item, mark the stairs as hidden until that content is cleared.
 	var stairs_placed := false
+	var attempts = 0
 	while not stairs_placed:
 		var sx = rng.randi_range(1, MAP_SIZE - 2)
 		var sy = rng.randi_range(1, MAP_SIZE - 2)
 		var c = map[sx][sy]
 		if c["kind"] == CellKind.WALL:
 			continue
-		c["has_stairs"] = true
 		if c["kind"] == CellKind.MONSTER or c["kind"] == CellKind.ITEM:
 			c["stairs_hidden"] = true
 			# keep the cell kind as-is (monster/item) until cleared
 		else:
+			if attempts < 30:
+				attempts += 1
+				continue
 			c["kind"] = CellKind.STAIRS
+		c["has_stairs"] = true
 		stairs_placed = true
 
 	# Place player start on a random floor cell (not wall, not monster/item/stairs hidden)
@@ -294,12 +230,11 @@ func _try_move(dir: Vector2) -> void:
 	elif target["kind"] == CellKind.STAIRS:
 		# step on stairs (level up placeholder)
 		player["pos"] = Vector2(nx, ny)
-		print("You step onto the stairs. (Level up / floor change would occur here.)")
+		_init_map()
+		_render_tilemap()
 	else:
 		# floor or previously cleared cell
 		player["pos"] = Vector2(nx, ny)
-
-	queue_redraw()
 
 func _combat(mx: int, my: int) -> void:
 	var mdata = map[mx][my]["variant"]
