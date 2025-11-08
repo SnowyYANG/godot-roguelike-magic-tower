@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://c5h1a7ys8sbpa"]
+
+[ext_resource type="Script" uid="uid://dkha8ps1jx8y4" path="res://roglike_magic_tower.gd" id="1_komkx"]
+
+[node name="RoglikeMagicTower" type="Node2D"]
+scale = Vector2(4, 4)
+script = ExtResource("1_komkx")
