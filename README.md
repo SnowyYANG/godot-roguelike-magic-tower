@@ -13,7 +13,7 @@ A simple rogue-like magic tower game developed using Godot.
 * Music: Abstraction
 
 ## LICENSE
-* Code: GPL-3.0 (Snowy)
+* Project: GPL-3.0 (Snowy)
 * Assets:
   - *princess.png*, *princess1.png*: CC-BY-SA-4.0 (Way)
   - *fragment1.png*: CC-BY-SA-4.0 (Way)
