@@ -34,12 +34,11 @@ var player = {
 var rng := RandomNumberGenerator.new()
 
 @onready var _tilemap : TileMapLayer = $TileMapLayer
+@onready var _player_sprite: Sprite2D = $TileMapLayer/Player
 
 func _ready():
 	rng.randomize()
 	_init_map()
-	# ensure runtime TileMap (uses programmatic ImageTextures sized CELL x CELL)
-	# d_ensure_tilemap()
 	# render initial map into TileMap
 	call_deferred("_render_tilemap")
 
@@ -67,7 +66,6 @@ func _render_tilemap() -> void:
 		for y in range(MAP_SIZE):
 			var cell = map[x][y]
 			var coords:Vector2i
-			var alter = 0
 			match cell["kind"]:
 				CellKind.WALL:
 					coords = Vector2i(8,3)
@@ -78,8 +76,7 @@ func _render_tilemap() -> void:
 					if cell["variant"] and cell["variant"].has("type"):
 						mtype = int(cell["variant"]["type"])
 					mtype = clamp(mtype, 0, MONSTER_TYPES - 1)
-					alter = 0# _monster_anim_phase
-					coords = Vector2i(105,42)
+					coords = Vector2i(104 + mtype, 42)
 				CellKind.ITEM:
 					# choose tile by item type if variant exists
 					var itype = cell["variant"].type
@@ -92,11 +89,11 @@ func _render_tilemap() -> void:
 				CellKind.STAIRS:
 					coords = Vector2i(24,0)
 			
-			_tilemap.set_cell(Vector2i(x, y), 0, coords, alter)
+			_tilemap.set_cell(Vector2i(x, y), 0, coords)
 
 	# draw player on top by setting its tile
 	var p = player["pos"]
-	_tilemap.set_cell(Vector2i(int(p.x), int(p.y)), 0, Vector2(153,1))
+	_player_sprite.position = Vector2(p.x * CELL + 1, p.y * CELL + 1)
 
 func _init_map():
 	# initialize blank map
@@ -107,7 +104,6 @@ func _init_map():
 			var cell = {
 				"kind": CellKind.FLOOR,
 				"variant": null, # monster/item data
-				"has_stairs": false,
 				"stairs_hidden": false
 			}
 			# outer walls
@@ -132,22 +128,23 @@ func _init_map():
 				if r2 < prob_monster:
 					map[x][y]["kind"] = CellKind.MONSTER
 					# simple monster stats
+					var mtype = rng.randi_range(0, MONSTER_TYPES - 1)
 					map[x][y]["variant"] = {
-						"hp": 6 + rng.randi_range(0, 8),
-						"atk": 2 + rng.randi_range(0, 3),
-						"def": 0,
-						"type": rng.randi_range(0, MONSTER_TYPES - 1)
+						"hp": 6 + mtype * 2,
+						"atk": 2 + mtype,
+						"def": clamp(mtype - 1, 0, 1),
+						"type": mtype
 					}
 				elif r2 < prob_monster + prob_item:
 					map[x][y]["kind"] = CellKind.ITEM
 					var t = rng.randi_range(0, 2)
 					match t:
 						0:
-							map[x][y]["variant"] = {"type": "atk", "value": 2}
+							map[x][y]["variant"] = {"type": "atk", "value": 1}
 						1:
 							map[x][y]["variant"] = {"type": "def", "value": 1}
 						2:
-							map[x][y]["variant"] = {"type": "hp", "value": 8}
+							map[x][y]["variant"] = {"type": "hp", "value": 5}
 
 	# Place stairs: choose any non-wall cell. If the chosen cell currently has a
 	# monster or item, mark the stairs as hidden until that content is cleared.
@@ -163,11 +160,10 @@ func _init_map():
 			c["stairs_hidden"] = true
 			# keep the cell kind as-is (monster/item) until cleared
 		else:
-			if attempts < 30:
+			if attempts < 4:
 				attempts += 1
 				continue
 			c["kind"] = CellKind.STAIRS
-		c["has_stairs"] = true
 		stairs_placed = true
 
 	# Place player start on a random floor cell (not wall, not monster/item/stairs hidden)
@@ -176,14 +172,13 @@ func _init_map():
 		var px = rng.randi_range(1, MAP_SIZE - 2)
 		var py = rng.randi_range(1, MAP_SIZE - 2)
 		var pc = map[px][py]
-		if pc["kind"] == CellKind.FLOOR and not pc["has_stairs"]:
+		if pc["kind"] == CellKind.FLOOR:
 			player["pos"] = Vector2(px, py)
 			placed = true
 
 func _unhandled_input(event):
 	# handle arrow keys for movement
 	if event is InputEventKey and event.pressed and not event.echo:
-		print("input")
 		var dir = Vector2()
 		if event.keycode == KEY_UP:
 			dir = Vector2(0, -1)
@@ -256,9 +251,7 @@ func _combat(mx: int, my: int) -> void:
 	map[mx][my]["variant"] = null
 
 	# if stairs were hidden here, reveal them
-	if map[mx][my]["has_stairs"] and map[mx][my]["stairs_hidden"]:
-		map[mx][my]["stairs_hidden"] = false
-		map[mx][my]["has_stairs"] = false
+	if map[mx][my]["stairs_hidden"]:
 		map[mx][my]["kind"] = CellKind.STAIRS
 		print("Stairs revealed!")
 
@@ -291,9 +284,8 @@ func _pickup_item(ix: int, iy: int) -> void:
 	map[ix][iy]["variant"] = null
 
 	# reveal stairs if hidden here
-	if map[ix][iy]["has_stairs"] and map[ix][iy]["stairs_hidden"]:
+	if map[ix][iy]["stairs_hidden"]:
 		map[ix][iy]["stairs_hidden"] = false
-		map[ix][iy]["has_stairs"] = false
 		map[ix][iy]["kind"] = CellKind.STAIRS
 		print("Stairs revealed!")
 
