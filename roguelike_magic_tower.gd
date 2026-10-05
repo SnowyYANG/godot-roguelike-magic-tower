@@ -250,6 +250,7 @@ func _combat(mx: int, my: int) -> void:
 	var mon_def = int(mdata.get("def", 0))
 
 	# Simple turn-based exchange until one side dies
+	var turns = 0
 	while mon_hp > 0 and player["hp"] > 0:
 		# player deals damage
 		var dmg = max(1, player["atk"] - mon_def)
@@ -258,6 +259,7 @@ func _combat(mx: int, my: int) -> void:
 		if mon_hp > 0:
 			var mdmg = max(1, mon_atk - player["def"])
 			player["hp"] -= mdmg
+		turns = turns + 1
 
 	if player["hp"] <= 0:
 		print("You were slain by the monster. (Game over placeholder)")
@@ -266,7 +268,7 @@ func _combat(mx: int, my: int) -> void:
 		return
 
 	# Monster defeated
-	print("Monster defeated!")
+	print("Monster defeated by " + str(turns) + ' turn(s)!')
 	# clear monster from map
 	map[mx][my]["kind"] = CellKind.FLOOR
 	map[mx][my]["variant"] = null
