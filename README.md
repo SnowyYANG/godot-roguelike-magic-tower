@@ -15,7 +15,7 @@ A simple rogue-like magic tower game developed using Godot.
 * Music: Abstraction
 * Sound Effects: JDWasabi
 
-## LICENSE
+## License
 * Project: GPL-3.0 (Snowy)
 * Assets:
   - [coming soon] *princess.png*, *princess1.png*: CC-BY-SA-4.0 (Way)
@@ -23,3 +23,7 @@ A simple rogue-like magic tower game developed using Godot.
   - Music (*.ogg*): <https://tallbeard.itch.io/three-red-hearts-prepare-to-dev>
   - Sound Effects (*.wav*): <https://jdwasabi.itch.io/8-bit-16-bit-sound-effects-pack>
   - Others: CC0
+
+## Acknowledgements
+
+[Godot Engine](https://godotengine.org/)
