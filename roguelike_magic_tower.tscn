@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://dkha8ps1jx8y4" path="res://roguelike_magic_tower.gd" id="1_waf45"]
 [ext_resource type="Texture2D" uid="uid://uehiaroqtnlr" path="res://assets/urizen_onebit_tileset__v2d0.png" id="2_bp7ex"]
 [ext_resource type="Texture2D" uid="uid://hdd201fpircp" path="res://assets/player.png" id="3_alwmr"]
-[ext_resource type="Texture2D" uid="uid://dm2xwpmap0flf" path="res://assets/slime.png" id="3_svpei"]
+[ext_resource type="Texture2D" uid="uid://dm2xwpmap0flf" path="res://assets/slimes.png" id="3_svpei"]
 [ext_resource type="AudioStream" uid="uid://dhljgwliix3qb" path="res://assets/blockbreak2.wav" id="4_alwmr"]
 [ext_resource type="AudioStream" uid="uid://yo2qm0bjo0q0" path="res://assets/Three Red Hearts - Connected.ogg" id="4_bp7ex"]
 [ext_resource type="Texture2D" uid="uid://bd73kgf8wnxcs" path="res://assets/boss.png" id="6_2b5yt"]

@@ -20,8 +20,6 @@ A simple rogue-like magic tower game developed using Godot.
 ## LICENSE
 * Project: GPL-3.0 (Snowy)
 * Assets:
-  - [coming soon] *princess.png*, *princess1.png*: CC-BY-SA-4.0 (Way)
-  - [coming soon] *fragment1.png*: CC-BY-SA-4.0 (Way)
-  - Music (*.ogg*): <https://tallbeard.itch.io/three-red-hearts-prepare-to-dev>
+  - The 2nd column sprites of *player.png*, *slimes.png*, *boss.png*, *princess.png*: [CC-BY-SA-4.0](LICENSE.txt)
   - Sound Effects (*.wav*): <https://jdwasabi.itch.io/8-bit-16-bit-sound-effects-pack>
   - Others: CC0
