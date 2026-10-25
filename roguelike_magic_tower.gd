@@ -20,7 +20,7 @@ const MONSTER_RATIO_BY_FLOOR = [
 	[0, 50, 50]
 ]
 
-enum CellKind {FLOOR, WALL, MONSTER, ITEM, STAIRS}
+enum CellKind {FLOOR, WALL, MONSTER, ITEM, STAIRS, BOSS, PRINCESS}
 
 var map = [] # 2D array [x][y] -> dictionary describing the cell
 
@@ -54,11 +54,11 @@ var monster_l = {
 	"def": 2
 }
 
-var monster_dragon = {
-	"type": "dragon",
-	"hp": 20,
-	"atk": 8,
-	"def": 4
+var monster_boss = {
+	"type": "boss",
+	"hp": 99,
+	"atk": 9,
+	"def": 9
 }
 
 const RARE_DROP_RATE := 0.07
@@ -127,8 +127,21 @@ func render_tilemap() -> void:
 						coords = Vector2i(30,4)
 				CellKind.STAIRS:
 					coords = Vector2i(24,0)
+				CellKind.BOSS:
+					coords = Vector2i(22,0)
+				CellKind.PRINCESS:
+					coords = Vector2i(22,0)
 			if y < 9 || current_floor > 1:
 				_tilemap.set_cell(Vector2i(x, y), source, coords)
+
+	if current_floor == 12 && boss_living:
+		$Map/Boss.show()
+		$Map/Boss.play('default')
+	
+	if current_floor == 13:
+		$Map/Princess.show()
+		$Map/Princess.play('default')
+
 	var p = player["pos"]
 	_player_sprite.position = Vector2(p.x * CELL + 1, p.y * CELL + 1)
 
@@ -167,6 +180,10 @@ func load_map(floor):
 			elif tile_coords == Vector2i(30,4):
 				cell_dict["kind"] = CellKind.ITEM
 				cell_dict["variant"] = {"type": "hp", "value": 5}
+			elif tile_coords == Vector2i(13,45):
+				cell_dict["kind"] = CellKind.PRINCESS
+			elif tile_coords == Vector2i(86,34):
+				cell_dict["kind"] = CellKind.BOSS
 			elif tile_coords.x >= 104 and tile_coords.y == 42:
 				cell_dict["kind"] = CellKind.MONSTER
 				cell_dict["variant"] = {"type": tile_coords.x - 104, "hp": 6, "atk": 2, "def": 0}
@@ -188,7 +205,7 @@ func load_map(floor):
 					"rare_drop": (m.type == "l" and rng.randf() < RARE_DROP_RATE)
 				}
 			map[x].append(cell_dict)
-	if !stair_placed:
+	if !stair_placed && current_floor < 12:
 		var px = int(player["pos"].x)
 		var py = int(player["pos"].y)
 		var placed = false
@@ -224,7 +241,7 @@ func _try_move(dir: Vector2) -> void:
 	if target["kind"] == CellKind.WALL:
 		# blocked
 		return
-	elif target["kind"] == CellKind.MONSTER:
+	elif target["kind"] == CellKind.MONSTER || target["kind"] == CellKind.BOSS && boss_living:
 		_combat(nx, ny)
 		return
 	elif target["kind"] == CellKind.ITEM:
@@ -236,17 +253,28 @@ func _try_move(dir: Vector2) -> void:
 		current_floor += 1
 		load_map(current_floor)
 		render_tilemap()
+	elif target["kind"] == CellKind.PRINCESS:
+		$Bgm.stop()
+		$Bgm.stream = preload("res://assets/Three Red Hearts - Princess Quest.ogg")
+		$Bgm.play()
+		return
 	else:
 		# floor or previously cleared cell
 		player["pos"] = Vector2(nx, ny)
 
+var boss_living = true
 func _combat(mx: int, my: int) -> void:
 	var mdata = map[mx][my]["variant"]
 	if mdata == null:
-		# safety: convert to floor
-		map[mx][my]["kind"] = CellKind.FLOOR
-		call_deferred("_render_tilemap")
-		return
+		if map[mx][my]["kind"] == CellKind.BOSS && boss_living:
+			print("You encountered the boss! (Boss placeholder)")
+			# For now, treat boss as a strong monster
+			mdata = monster_boss
+		else:
+			# safety: convert to floor
+			map[mx][my]["kind"] = CellKind.FLOOR
+			call_deferred("_render_tilemap")
+			return
 
 	var mon_hp = int(mdata["hp"])
 	var mon_atk = int(mdata.get("atk", 1))
@@ -273,11 +301,14 @@ func _combat(mx: int, my: int) -> void:
 	# Monster defeated
 	print("Monster defeated by " + str(turns) + ' turn(s)!')
 	# clear monster from map
+	if map[mx][my]["kind"] == CellKind.BOSS:
+		boss_living = false
+		$Map/Boss.hide()
 	map[mx][my]["kind"] = CellKind.FLOOR
 	map[mx][my]["variant"] = null
 
 	# if stairs were hidden here, reveal them
-	if map[mx][my]["stairs_hidden"]:
+	if map[mx][my]["stairs_hidden"] || !boss_living:
 		map[mx][my]["kind"] = CellKind.STAIRS
 		stairs_revealed()
 
@@ -286,9 +317,9 @@ func _combat(mx: int, my: int) -> void:
 	call_deferred("render_tilemap")
 
 	player_sound.stream = preload("res://assets/Hit damage 1.wav")
-	for i in range(turns):
+	for i in range(min(turns, 11)):
 		player_sound.play()
-		if i < turns - 1:
+		if i < min(turns, 11) - 1:
 			await get_tree().create_timer(0.1).timeout
 
 func _pickup_item(ix: int, iy: int) -> void:
