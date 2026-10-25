@@ -12281,13 +12281,17 @@ offset_right = 159.25
 offset_bottom = 24.0
 texture = SubResource("AtlasTexture_vgvj8")
 
-[node name="TextureRect4" type="TextureRect" parent="Control" unique_id=531297544]
+[node name="Player" type="TextureRect" parent="Control" unique_id=531297544]
+custom_maximum_size = Vector2(12, 12)
+clip_contents = true
 layout_mode = 0
-offset_left = 132.5
-offset_top = 24.5
-offset_right = 144.5
-offset_bottom = 36.5
+offset_left = 132.0
+offset_top = 25.0
+offset_right = 144.0
+offset_bottom = 37.0
 texture = ExtResource("3_alwmr")
+expand_mode = 1
+stretch_mode = 1
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="." unique_id=279428956]
 stream = ExtResource("4_bp7ex")

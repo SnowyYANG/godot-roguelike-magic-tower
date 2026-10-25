@@ -325,4 +325,4 @@ func _pickup_item(ix: int, iy: int) -> void:
 	render_tilemap()
 
 func stairs_revealed():
-	$Map/Player/StairRevealedSoundplayer_sound.play()
+	$Map/Player/StairRevealedSound.play()
