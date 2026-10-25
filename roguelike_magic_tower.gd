@@ -179,7 +179,7 @@ func load_map(floor):
 				cell_dict["variant"] = {"type": "def", "value": 1}
 			elif tile_coords == Vector2i(30,4):
 				cell_dict["kind"] = CellKind.ITEM
-				cell_dict["variant"] = {"type": "hp", "value": 5}
+				cell_dict["variant"] = {"type": "hp", "value": 3}
 			elif tile_coords == Vector2i(13,45):
 				cell_dict["kind"] = CellKind.PRINCESS
 			elif tile_coords == Vector2i(86,34):
@@ -251,6 +251,10 @@ func _try_move(dir: Vector2) -> void:
 		# step on stairs (level up placeholder)
 		player["pos"] = Vector2(nx, ny)
 		current_floor += 1
+		if current_floor == 11:
+			$Bgm.stop()
+			$Bgm.stream = preload("res://assets/Three Red Hearts - Save the City.ogg")
+			$Bgm.play()
 		load_map(current_floor)
 		render_tilemap()
 	elif target["kind"] == CellKind.PRINCESS:
@@ -294,8 +298,11 @@ func _combat(mx: int, my: int) -> void:
 
 	if player["hp"] <= 0:
 		print("You were slain by the monster. (Game over placeholder)")
-		# For now, reset HP so the demo can continue
-		player["hp"] = 1
+		player["hp"] = 0
+		_player_sprite.hide()
+		$Bgm.stop()
+		$Bgm.stream = preload("res://assets/Three Red Hearts - Rumble at the Gates.ogg")
+		$Bgm.play()
 		return
 
 	# Monster defeated
@@ -304,6 +311,7 @@ func _combat(mx: int, my: int) -> void:
 	if map[mx][my]["kind"] == CellKind.BOSS:
 		boss_living = false
 		$Map/Boss.hide()
+		$Bgm.stop()
 	map[mx][my]["kind"] = CellKind.FLOOR
 	map[mx][my]["variant"] = null
 
