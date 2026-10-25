@@ -2,5 +2,6 @@
 .godot/
 /android/
 *.tmp
-
 .vscode/
+
+README-screenshot.jpg.import

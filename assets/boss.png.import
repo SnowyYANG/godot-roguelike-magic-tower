@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b60rs5h5yadnb"
-path="res://.godot/imported/princess2.png-98187b10bbf6736dc290961cd2f60018.ctex"
+uid="uid://bd73kgf8wnxcs"
+path="res://.godot/imported/boss.png-266cbc3c76e12bc7d5a53d685b9ff650.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/princess2.png"
-dest_files=["res://.godot/imported/princess2.png-98187b10bbf6736dc290961cd2f60018.ctex"]
+source_file="res://assets/boss.png"
+dest_files=["res://.godot/imported/boss.png-266cbc3c76e12bc7d5a53d685b9ff650.ctex"]
 
 [params]
 

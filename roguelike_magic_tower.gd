@@ -20,7 +20,7 @@ const MONSTER_RATIO_BY_FLOOR = [
 	[0, 50, 50]
 ]
 
-enum CellKind {FLOOR, WALL, MONSTER, ITEM, STAIRS}
+enum CellKind {FLOOR, WALL, MONSTER, ITEM, STAIRS, BOSS, PRINCESS}
 
 var map = [] # 2D array [x][y] -> dictionary describing the cell
 
@@ -54,11 +54,11 @@ var monster_l = {
 	"def": 2
 }
 
-var monster_dragon = {
-	"type": "dragon",
-	"hp": 20,
-	"atk": 8,
-	"def": 4
+var monster_boss = {
+	"type": "boss",
+	"hp": 99,
+	"atk": 9,
+	"def": 9
 }
 
 const RARE_DROP_RATE := 0.07
@@ -66,13 +66,14 @@ const RARE_DROP_RATE := 0.07
 var rng := RandomNumberGenerator.new()
 
 @onready var _tilemap : TileMapLayer = $Map
-@onready var _player_sprite: Sprite2D = $Map/Player
+@onready var _player_sprite: AnimatedSprite2D = $Map/Player
 @onready var player_sound: AudioStreamPlayer2D = $Map/Player/Sound
 
 func _ready():
 	rng.randomize()
 	load_map(current_floor)
 	render_tilemap()
+	_player_sprite.play('default')
 
 func _process(_delta: float) -> void:
 	$Control/Hp.text = str(player['hp'])
@@ -101,6 +102,7 @@ func render_tilemap() -> void:
 	for x in range(MAP_SIZE):
 		for y in range(MAP_SIZE):
 			var cell = map[x][y]
+			var source = 0
 			var coords:Vector2i
 			match cell["kind"]:
 				CellKind.WALL:
@@ -112,7 +114,8 @@ func render_tilemap() -> void:
 					if cell["variant"] and cell["variant"].has("type"):
 						mtype = 0 if cell["variant"]["type"] == "s" else 1 if cell["variant"]["type"] == "m" else 2
 					mtype = clamp(mtype, 0, MONSTER_TYPES - 1)
-					coords = Vector2i(104 + mtype, 42)
+					source = 4
+					coords = Vector2i(0, mtype)
 				CellKind.ITEM:
 					# choose tile by item type if variant exists
 					var itype = cell["variant"].type
@@ -124,8 +127,21 @@ func render_tilemap() -> void:
 						coords = Vector2i(30,4)
 				CellKind.STAIRS:
 					coords = Vector2i(24,0)
+				CellKind.BOSS:
+					coords = Vector2i(22,0)
+				CellKind.PRINCESS:
+					coords = Vector2i(22,0)
 			if y < 9 || current_floor > 1:
-				_tilemap.set_cell(Vector2i(x, y), 0, coords)
+				_tilemap.set_cell(Vector2i(x, y), source, coords)
+
+	if current_floor == 12 && boss_living:
+		$Map/Boss.show()
+		$Map/Boss.play('default')
+	
+	if current_floor == 13:
+		$Map/Princess.show()
+		$Map/Princess.play('default')
+
 	var p = player["pos"]
 	_player_sprite.position = Vector2(p.x * CELL + 1, p.y * CELL + 1)
 
@@ -163,7 +179,11 @@ func load_map(floor):
 				cell_dict["variant"] = {"type": "def", "value": 1}
 			elif tile_coords == Vector2i(30,4):
 				cell_dict["kind"] = CellKind.ITEM
-				cell_dict["variant"] = {"type": "hp", "value": 5}
+				cell_dict["variant"] = {"type": "hp", "value": 3}
+			elif tile_coords == Vector2i(13,45):
+				cell_dict["kind"] = CellKind.PRINCESS
+			elif tile_coords == Vector2i(86,34):
+				cell_dict["kind"] = CellKind.BOSS
 			elif tile_coords.x >= 104 and tile_coords.y == 42:
 				cell_dict["kind"] = CellKind.MONSTER
 				cell_dict["variant"] = {"type": tile_coords.x - 104, "hp": 6, "atk": 2, "def": 0}
@@ -185,7 +205,7 @@ func load_map(floor):
 					"rare_drop": (m.type == "l" and rng.randf() < RARE_DROP_RATE)
 				}
 			map[x].append(cell_dict)
-	if !stair_placed:
+	if !stair_placed && current_floor < 12:
 		var px = int(player["pos"].x)
 		var py = int(player["pos"].y)
 		var placed = false
@@ -221,7 +241,7 @@ func _try_move(dir: Vector2) -> void:
 	if target["kind"] == CellKind.WALL:
 		# blocked
 		return
-	elif target["kind"] == CellKind.MONSTER:
+	elif target["kind"] == CellKind.MONSTER || target["kind"] == CellKind.BOSS && boss_living:
 		_combat(nx, ny)
 		return
 	elif target["kind"] == CellKind.ITEM:
@@ -231,25 +251,41 @@ func _try_move(dir: Vector2) -> void:
 		# step on stairs (level up placeholder)
 		player["pos"] = Vector2(nx, ny)
 		current_floor += 1
+		if current_floor == 11:
+			$Bgm.stop()
+			$Bgm.stream = preload("res://assets/Three Red Hearts - Save the City.ogg")
+			$Bgm.play()
 		load_map(current_floor)
 		render_tilemap()
+	elif target["kind"] == CellKind.PRINCESS:
+		$Bgm.stop()
+		$Bgm.stream = preload("res://assets/Three Red Hearts - Princess Quest.ogg")
+		$Bgm.play()
+		return
 	else:
 		# floor or previously cleared cell
 		player["pos"] = Vector2(nx, ny)
 
+var boss_living = true
 func _combat(mx: int, my: int) -> void:
 	var mdata = map[mx][my]["variant"]
 	if mdata == null:
-		# safety: convert to floor
-		map[mx][my]["kind"] = CellKind.FLOOR
-		call_deferred("_render_tilemap")
-		return
+		if map[mx][my]["kind"] == CellKind.BOSS && boss_living:
+			print("You encountered the boss! (Boss placeholder)")
+			# For now, treat boss as a strong monster
+			mdata = monster_boss
+		else:
+			# safety: convert to floor
+			map[mx][my]["kind"] = CellKind.FLOOR
+			call_deferred("_render_tilemap")
+			return
 
 	var mon_hp = int(mdata["hp"])
 	var mon_atk = int(mdata.get("atk", 1))
 	var mon_def = int(mdata.get("def", 0))
 
 	# Simple turn-based exchange until one side dies
+	var turns = 0
 	while mon_hp > 0 and player["hp"] > 0:
 		# player deals damage
 		var dmg = max(1, player["atk"] - mon_def)
@@ -258,27 +294,41 @@ func _combat(mx: int, my: int) -> void:
 		if mon_hp > 0:
 			var mdmg = max(1, mon_atk - player["def"])
 			player["hp"] -= mdmg
+		turns = turns + 1
 
 	if player["hp"] <= 0:
 		print("You were slain by the monster. (Game over placeholder)")
-		# For now, reset HP so the demo can continue
-		player["hp"] = 1
+		player["hp"] = 0
+		_player_sprite.hide()
+		$Bgm.stop()
+		$Bgm.stream = preload("res://assets/Three Red Hearts - Rumble at the Gates.ogg")
+		$Bgm.play()
 		return
 
 	# Monster defeated
-	print("Monster defeated!")
+	print("Monster defeated by " + str(turns) + ' turn(s)!')
 	# clear monster from map
+	if map[mx][my]["kind"] == CellKind.BOSS:
+		boss_living = false
+		$Map/Boss.hide()
+		$Bgm.stop()
 	map[mx][my]["kind"] = CellKind.FLOOR
 	map[mx][my]["variant"] = null
 
 	# if stairs were hidden here, reveal them
-	if map[mx][my]["stairs_hidden"]:
+	if map[mx][my]["stairs_hidden"] || !boss_living:
 		map[mx][my]["kind"] = CellKind.STAIRS
 		stairs_revealed()
 
 	# move player into the cell
 	player["pos"] = Vector2(mx, my)
 	call_deferred("render_tilemap")
+
+	player_sound.stream = preload("res://assets/Hit damage 1.wav")
+	for i in range(min(turns, 11)):
+		player_sound.play()
+		if i < min(turns, 11) - 1:
+			await get_tree().create_timer(0.1).timeout
 
 func _pickup_item(ix: int, iy: int) -> void:
 	var ide = map[ix][iy]["variant"]
@@ -314,4 +364,4 @@ func _pickup_item(ix: int, iy: int) -> void:
 	render_tilemap()
 
 func stairs_revealed():
-	$Map/Player/StairRevealedSoundplayer_sound.play()
+	$Map/Player/StairRevealedSound.play()
