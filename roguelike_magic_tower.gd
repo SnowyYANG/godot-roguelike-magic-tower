@@ -66,13 +66,14 @@ const RARE_DROP_RATE := 0.07
 var rng := RandomNumberGenerator.new()
 
 @onready var _tilemap : TileMapLayer = $Map
-@onready var _player_sprite: Sprite2D = $Map/Player
+@onready var _player_sprite: AnimatedSprite2D = $Map/Player
 @onready var player_sound: AudioStreamPlayer2D = $Map/Player/Sound
 
 func _ready():
 	rng.randomize()
 	load_map(current_floor)
 	render_tilemap()
+	_player_sprite.play('default')
 
 func _process(_delta: float) -> void:
 	$Control/Hp.text = str(player['hp'])
@@ -101,6 +102,7 @@ func render_tilemap() -> void:
 	for x in range(MAP_SIZE):
 		for y in range(MAP_SIZE):
 			var cell = map[x][y]
+			var source = 0
 			var coords:Vector2i
 			match cell["kind"]:
 				CellKind.WALL:
@@ -112,7 +114,8 @@ func render_tilemap() -> void:
 					if cell["variant"] and cell["variant"].has("type"):
 						mtype = 0 if cell["variant"]["type"] == "s" else 1 if cell["variant"]["type"] == "m" else 2
 					mtype = clamp(mtype, 0, MONSTER_TYPES - 1)
-					coords = Vector2i(104 + mtype, 42)
+					source = 4
+					coords = Vector2i(0, mtype)
 				CellKind.ITEM:
 					# choose tile by item type if variant exists
 					var itype = cell["variant"].type
@@ -125,7 +128,7 @@ func render_tilemap() -> void:
 				CellKind.STAIRS:
 					coords = Vector2i(24,0)
 			if y < 9 || current_floor > 1:
-				_tilemap.set_cell(Vector2i(x, y), 0, coords)
+				_tilemap.set_cell(Vector2i(x, y), source, coords)
 	var p = player["pos"]
 	_player_sprite.position = Vector2(p.x * CELL + 1, p.y * CELL + 1)
 
@@ -281,6 +284,12 @@ func _combat(mx: int, my: int) -> void:
 	# move player into the cell
 	player["pos"] = Vector2(mx, my)
 	call_deferred("render_tilemap")
+
+	player_sound.stream = preload("res://assets/Hit damage 1.wav")
+	for i in range(turns):
+		player_sound.play()
+		if i < turns - 1:
+			await get_tree().create_timer(0.1).timeout
 
 func _pickup_item(ix: int, iy: int) -> void:
 	var ide = map[ix][iy]["variant"]

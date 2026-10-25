@@ -3,8 +3,12 @@
 [ext_resource type="Script" uid="uid://dkha8ps1jx8y4" path="res://roguelike_magic_tower.gd" id="1_waf45"]
 [ext_resource type="Texture2D" uid="uid://uehiaroqtnlr" path="res://assets/urizen_onebit_tileset__v2d0.png" id="2_bp7ex"]
 [ext_resource type="Texture2D" uid="uid://hdd201fpircp" path="res://assets/player.png" id="3_alwmr"]
+[ext_resource type="Texture2D" uid="uid://dm2xwpmap0flf" path="res://assets/slime.png" id="3_svpei"]
 [ext_resource type="AudioStream" uid="uid://dhljgwliix3qb" path="res://assets/blockbreak2.wav" id="4_alwmr"]
 [ext_resource type="AudioStream" uid="uid://yo2qm0bjo0q0" path="res://assets/Three Red Hearts - Connected.ogg" id="4_bp7ex"]
+
+[sub_resource type="TileMapPattern" id="TileMapPattern_2b5yt"]
+tile_data = PackedInt32Array(0, 6881280, 42)
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_nv6jo"]
 texture = ExtResource("2_bp7ex")
@@ -12056,9 +12060,53 @@ texture_region_size = Vector2i(12, 12)
 221:53/0 = 0
 222:53/0 = 0
 
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_v7eqb"]
+texture = ExtResource("3_svpei")
+separation = Vector2i(1, 1)
+texture_region_size = Vector2i(12, 12)
+0:1/animation_columns = 2
+0:1/animation_speed = 2.0
+0:1/animation_frame_0/duration = 1.0
+0:1/animation_frame_1/duration = 1.0
+0:1/0 = 0
+0:2/animation_columns = 2
+0:2/animation_speed = 2.0
+0:2/animation_frame_0/duration = 1.0
+0:2/animation_frame_1/duration = 1.0
+0:2/0 = 0
+0:0/animation_columns = 2
+0:0/animation_speed = 2.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/0 = 0
+
 [sub_resource type="TileSet" id="TileSet_k4fxd"]
 tile_size = Vector2i(12, 12)
 sources/0 = SubResource("TileSetAtlasSource_nv6jo")
+sources/4 = SubResource("TileSetAtlasSource_v7eqb")
+pattern_0 = SubResource("TileMapPattern_2b5yt")
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_svpei"]
+atlas = ExtResource("3_alwmr")
+region = Rect2(0, 0, 12, 12)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2b5yt"]
+atlas = ExtResource("3_alwmr")
+region = Rect2(13, 0, 12, 12)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_f1kir"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_svpei")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2b5yt")
+}],
+"loop": 1,
+"name": &"default",
+"speed": 5.0
+}]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_allmaps"]
 texture = ExtResource("2_bp7ex")
@@ -12112,14 +12160,17 @@ scale = Vector2(2, 2)
 tile_map_data = PackedByteArray("AAAAAAAAAAAIAAMAAAABAAAAAAAIAAMAAAACAAAAAAAIAAMAAAADAAAAAAAIAAMAAAAEAAAAAAAIAAMAAAAAAAEAAAAIAAMAAAAAAAIAAAAIAAMAAAAAAAMAAAAIAAMAAAAAAAQAAAAIAAMAAAAFAAAAAAAIAAMAAAAGAAAAAAAIAAMAAAAHAAAAAAAIAAMAAAAIAAAAAAAIAAMAAAAJAAAAAAAIAAMAAAAAAAUAAAAIAAMAAAAAAAYAAAAIAAMAAAAAAAcAAAAIAAMAAAAAAAgAAAAIAAMAAAAAAAkAAAAIAAMAAAAJAAEAAAAIAAMAAAAJAAIAAAAIAAMAAAAJAAMAAAAIAAMAAAAJAAQAAAAIAAMAAAAJAAUAAAAIAAMAAAAJAAYAAAAIAAMAAAAJAAcAAAAIAAMAAAAJAAgAAAAIAAMAAAAJAAkAAAAIAAMAAAAIAAkAAAASAAMAAAAHAAkAAAAIAAMAAAAGAAkAAAAIAAMAAAAEAAkAAAAIAAMAAAADAAkAAAAIAAMAAAABAAkAAAAIAAMAAAACAAkAAAAIAAMAAAAFAAkAAAAIAAMAAAAKAAAAAACRAAQAAAAKAAEAAACRAAQAAAAKAAIAAACRAAQAAAALAAAAAACRAAQAAAAMAAAAAABAACEAAAANAAAAAACRAAQAAAAKAAMAAACRAAQAAAAKAAQAAACRAAQAAAAKAAUAAACRAAQAAAAKAAYAAACRAAQAAAAKAAcAAACRAAQAAAAKAAgAAACRAAQAAAAKAAkAAACRAAQAAAALAAEAAABBACEAAAAMAAIAAAAaAB4AAAAMAAMAAABdACoAAAAMAAEAAAAXAAcAAAAMAAQAAABJACIAAAAMAAcAAABJACIAAAALAAcAAABWACIAAAAMAAUAAABdACoAAAAMAAYAAABJACIAAAALAAUAAABpACoAAAALAAMAAAAaAB4AAAALAAQAAABoACoAAAALAAkAAABJACIAAAAMAAkAAABJACIAAAAMAAgAAABJACIAAAAOAAAAAABAACEAAAAPAAAAAABJACIAAAAPAAkAAABJACIAAAAOAAkAAABJACIAAAANAAkAAABJACIAAAAOAAEAAAAgAAUAAAANAAEAAACRAAQAAAAPAAEAAAAVAAgAAAAPAAIAAAA/ACEAAAAOAAIAAAA/ACEAAAANAAIAAAA/ACEAAAANAAMAAAA/ACEAAAAOAAMAAABdACoAAAAPAAMAAAA/ACEAAAAPAAQAAAA/ACEAAAAOAAQAAAA/ACEAAAANAAQAAAA/ACEAAAANAAUAAAA/ACEAAAAPAAYAAAA/ACEAAAAOAAUAAABdACoAAAAPAAUAAABkACsAAAAOAAYAAABkACsAAAANAAYAAABkACsAAAANAAcAAABkACsAAAAOAAcAAABkACsAAAAPAAgAAABkACsAAAAPAAcAAABkACsAAAAOAAgAAABkACsAAAANAAgAAABkACsAAAALAAgAAAAsABMAAAALAAYAAABqACoAAAADAAgAAAAAAAMAAAADAAcAAAAAAAMAAAADAAYAAAAAAAMAAAADAAUAAAAAAAMAAAAFAAUAAAAAAAMAAAAFAAYAAAAAAAMAAAAFAAcAAAAAAAMAAAAFAAgAAAAAAAMAAAAEAAgAAAAnAAYAAAAEAAYAAABqACoAAAAEAAcAAABpACoAAAAEAAUAAABoACoAAAAEAAQAAABpACoAAAA=")
 tile_set = SubResource("TileSet_k4fxd")
 
-[node name="Player" type="Sprite2D" parent="Map" unique_id=1855063841]
-texture = ExtResource("3_alwmr")
+[node name="Player" type="AnimatedSprite2D" parent="Map" unique_id=748066655]
+sprite_frames = SubResource("SpriteFrames_f1kir")
 centered = false
 
 [node name="Sound" type="AudioStreamPlayer2D" parent="Map/Player" unique_id=1433791085]
 
 [node name="StairRevealedSound" type="AudioStreamPlayer2D" parent="Map/Player" unique_id=1956043842]
 stream = ExtResource("4_alwmr")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Map/Player" unique_id=1676127727]
+root_node = NodePath("../../..")
 
 [node name="StoryMaps" type="TileMapLayer" parent="." unique_id=1755604280]
 position = Vector2(-506, -664)
