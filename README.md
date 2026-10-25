@@ -18,7 +18,7 @@ A simple rogue-like magic tower game developed using Godot.
 * Sound Effects: JDWasabi
 
 ## License
-* Project: GPL-3.0 (Snowy)
+* Project: [GPL-3.0](LICENSE)
 * Assets:
   - The 2nd column sprites of *player.png*, *slimes.png*, *boss.png*, *princess.png*: [CC-BY-SA-4.0](LICENSE.txt)
   - Sound Effects (*.wav*): <https://jdwasabi.itch.io/8-bit-16-bit-sound-effects-pack>
